@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Manager — Add Recipe</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            min-height: 100vh;
+        }
+
+        nav {
+            background: #2c3e50;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav h1 { color: white; font-size: 1.2rem; }
+        nav a { color: #ccc; text-decoration: none; margin-left: 1rem; font-size: 0.9rem; }
+        nav a:hover { color: white; }
+
+        .container {
+            max-width: 750px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 2rem;
+        }
+
+        h2 { color: #2c3e50; margin-bottom: 1.5rem; }
+
+        .form-group { margin-bottom: 1.2rem; }
+
+        label {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: #555;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="file"],
+        textarea, select {
+            width: 100%;
+            padding: 0.7rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-family: Arial, sans-serif;
+        }
+
+        input:focus, textarea:focus { outline: none; border-color: #27ae60; }
+
+        textarea { resize: vertical; min-height: 120px; }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-green { background: #27ae60; color: white; }
+        .btn-green:hover { background: #219a52; }
+        .btn-gray { background: #95a5a6; color: white; }
+        .btn-gray:hover { background: #7f8c8d; }
+        .btn-red { background: #e74c3c; color: white; font-size: 0.8rem; padding: 0.3rem 0.6rem; }
+
+        /* Ingredients */
+        .ingredient-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr auto;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+            align-items: center;
+        }
+
+        /* Tags */
+        .tags-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            min-height: 42px;
+            cursor: text;
+        }
+
+        .tag-pill {
+            background: #27ae60;
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .tag-pill span { cursor: pointer; font-weight: bold; }
+
+        .tags-input input {
+            border: none;
+            outline: none;
+            padding: 0.2rem;
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        /* Nutrition grid */
+        .nutrition-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .message {
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: none;
+            text-align: center;
+        }
+
+        .message.success { background: #d4edda; color: #155724; }
+        .message.error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h1>🍴 Recipe Manager</h1>
+    <div>
+        <a href="recipes.html">My Recipes</a>
+        <a href="recipe-form.html">+ New Recipe</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card">
+        <h2 id="formTitle">Add New Recipe</h2>
+        <div class="message" id="message"></div>
+
+        <!-- Basic Info -->
+        <div class="form-group">
+            <label>Recipe Title *</label>
+            <input type="text" id="title" placeholder="e.g. Pasta Carbonara">
+        </div>
+
+        <div class="form-group">
+            <label>Servings</label>
+            <input type="number" id="servings" value="2" min="1">
+        </div>
+
+        <div class="form-group">
+            <label>Instructions</label>
+            <textarea id="instructions" placeholder="Step by step instructions..."></textarea>
+        </div>
+
+        <!-- Ingredients -->
+        <div class="form-group">
+            <div class="section-title">Ingredients</div>
+            <div id="ingredientsList"></div>
+            <button class="btn btn-gray" onclick="addIngredientRow()">+ Add Ingredient</button>
+        </div>
+
+        <!-- Tags -->
+        <div class="form-group">
+            <div class="section-title">Tags</div>
+            <div class="tags-input" id="tagsInput" onclick="focusTagInput()">
+                <input type="text" id="tagInput" placeholder="Type a tag and press Enter..."
+                       onkeydown="handleTagInput(event)">
+            </div>
+        </div>
+
+        <!-- Nutrition -->
+        <div class="form-group">
+            <div class="section-title">Nutrition (optional)</div>
+            <div class="nutrition-grid">
+                <div>
+                    <label>Calories</label>
+                    <input type="number" id="calories" placeholder="kcal">
+                </div>
+                <div>
+                    <label>Protein (g)</label>
+                    <input type="number" id="protein" placeholder="g">
+                </div>
+                <div>
+                    <label>Fat (g)</label>
+                    <input type="number" id="fat" placeholder="g">
+                </div>
+                <div>
+                    <label>Carbs (g)</label>
+                    <input type="number" id="carbs" placeholder="g">
+                </div>
+            </div>
+        </div>
+
+        <!-- Image -->
+        <div class="form-group">
+            <label>Recipe Image (optional)</label>
+            <input type="file" id="imageInput" accept="image/*">
+        </div>
+
+        <div class="form-actions">
+            <button class="btn btn-green" onclick="saveRecipe()">Save Recipe</button>
+            <a href="recipes.html" class="btn btn-gray">Cancel</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API    = 'http://localhost/recipe-manager/backend/recipe.php';
+    const user   = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) window.location.href = 'login.html';
+
+    let tags = [];
+    let editId = null;
+
+    // Check if editing existing recipe
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('id')) {
+        editId = params.get('id');
+        document.getElementById('formTitle').textContent = 'Edit Recipe';
+        loadRecipe(editId);
+    } else {
+        addIngredientRow(); // Start with one empty row
+    }
+
+    async function loadRecipe(id) {
+        const res    = await fetch(`${API}?action=single&id=${id}`);
+        const recipe = await res.json();
+
+        document.getElementById('title').value        = recipe.title;
+        document.getElementById('servings').value     = recipe.servings;
+        document.getElementById('instructions').value = recipe.instructions || '';
+
+        // Load ingredients
+        recipe.ingredients.forEach(i => addIngredientRow(i.name, i.quantity, i.unit));
+
+        // Load tags
+        recipe.tags.forEach(t => addTag(t));
+
+        // Load nutrition
+        if (recipe.nutrition) {
+            document.getElementById('calories').value = recipe.nutrition.calories || '';
+            document.getElementById('protein').value  = recipe.nutrition.protein || '';
+            document.getElementById('fat').value      = recipe.nutrition.fat || '';
+            document.getElementById('carbs').value    = recipe.nutrition.carbs || '';
+        }
+    }
+
+    function addIngredientRow(name = '', quantity = '', unit = '') {
+        const row = document.createElement('div');
+        row.className = 'ingredient-row';
+        row.innerHTML = `
+            <input type="text" placeholder="Ingredient name" value="${name}">
+            <input type="number" placeholder="Amount" value="${quantity}" step="0.01">
+            <input type="text" placeholder="Unit (g, ml...)" value="${unit}">
+            <button class="btn btn-red" onclick="this.parentElement.remove()">✕</button>
+        `;
+        document.getElementById('ingredientsList').appendChild(row);
+    }
+
+    function handleTagInput(e) {
+        if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            const val = document.getElementById('tagInput').value.trim().toLowerCase();
+            if (val && !tags.includes(val)) addTag(val);
+            document.getElementById('tagInput').value = '';
+        }
+    }
+
+    function addTag(name) {
+        if (tags.includes(name)) return;
+        tags.push(name);
+        const pill = document.createElement('div');
+        pill.className = 'tag-pill';
+        pill.innerHTML = `${name} <span onclick="removeTag('${name}', this.parentElement)">×</span>`;
+        document.getElementById('tagsInput').insertBefore(pill, document.getElementById('tagInput'));
+    }
+
+    function removeTag(name, el) {
+        tags = tags.filter(t => t !== name);
+        el.remove();
+    }
+
+    function focusTagInput() {
+        document.getElementById('tagInput').focus();
+    }
+
+    function showMessage(text, type) {
+        const el = document.getElementById('message');
+        el.textContent = text;
+        el.className = `message ${type}`;
+        el.style.display = 'block';
+        window.scrollTo(0, 0);
+    }
+
+    async function saveRecipe() {
+        const title    = document.getElementById('title').value.trim();
+        const servings = parseInt(document.getElementById('servings').value);
+
+        if (!title) {
+            showMessage('Recipe title is required.', 'error');
+            return;
+        }
+
+        // Collect ingredients
+        const rows = document.querySelectorAll('.ingredient-row');
+        const ingredients = [];
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const name   = inputs[0].value.trim();
+            if (name) {
+                ingredients.push({
+                    name,
+                    quantity: parseFloat(inputs[1].value) || 0,
+                    unit: inputs[2].value.trim()
+                });
+            }
+        });
+
+        // Collect nutrition
+        const cal     = document.getElementById('calories').value;
+        const protein = document.getElementById('protein').value;
+        const fat     = document.getElementById('fat').value;
+        const carbs   = document.getElementById('carbs').value;
+        const nutrition = (cal || protein || fat || carbs) ? {
+            calories: parseInt(cal) || 0,
+            protein:  parseFloat(protein) || 0,
+            fat:      parseFloat(fat) || 0,
+            carbs:    parseFloat(carbs) || 0
+        } : null;
+
+        const payload = {
+            user_id:      user.user_id,
+            title,
+            instructions: document.getElementById('instructions').value.trim(),
+            servings,
+            ingredients,
+            tags,
+            nutrition
+        };
+
+        // Handle image upload first if selected
+        const imageFile = document.getElementById('imageInput').files[0];
+        if (imageFile) {
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            const imgRes  = await fetch(`${API}?action=upload_image`, { method: 'POST', body: formData });
+            const imgData = await imgRes.json();
+            if (imgData.success) payload.image_path = imgData.image_path;
+        }
+
+        // Save or update
+        const method = editId ? 'PUT' : 'POST';
+        if (editId) payload.id = editId;
+
+        const res  = await fetch(API, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            showMessage(editId ? 'Recipe updated!' : 'Recipe saved!', 'success');
+            setTimeout(() => window.location.href = 'recipes.html', 1000);
+        } else {
+            showMessage(data.error || 'Something went wrong.', 'error');
+        }
+    }
+</script>
+</body>
+</html>
