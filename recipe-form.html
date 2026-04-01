@@ -156,6 +156,33 @@
             text-align: center;
         }
 
+        .usda-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            z-index: 100;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+
+        .usda-option {
+            padding: 0.6rem 0.8rem;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.85rem;
+        }
+
+        .usda-option:hover { background: #eafaf1; }
+        .usda-option span { color: #888; font-size: 0.75rem; }
+
         .message.success { background: #d4edda; color: #155724; }
         .message.error { background: #f8d7da; color: #721c24; }
     </style>
@@ -284,16 +311,65 @@
         }
     }
 
+    const USDA_KEY = '5TO5Fb4wesu6KMYDNXdQf6kGOIsfeoPHuSgJ3SLV';
+
     function addIngredientRow(name = '', quantity = '', unit = '') {
         const row = document.createElement('div');
         row.className = 'ingredient-row';
+        row.style.position = 'relative';
         row.innerHTML = `
-            <input type="text" placeholder="Ingredient name" value="${name}">
+            <div style="position:relative">
+                <input type="text" placeholder="Ingredient name" value="${name}"
+                    oninput="searchUSDA(this)" autocomplete="off">
+                <div class="usda-dropdown"></div>
+            </div>
             <input type="number" placeholder="Amount" value="${quantity}" step="0.01">
             <input type="text" placeholder="Unit (g, ml...)" value="${unit}">
             <button class="btn btn-red" onclick="this.parentElement.remove()">✕</button>
         `;
         document.getElementById('ingredientsList').appendChild(row);
+    }
+
+    async function searchUSDA(input) {
+        const query    = input.value.trim();
+        const dropdown = input.nextElementSibling;
+
+        if (query.length < 2) { dropdown.innerHTML = ''; return; }
+
+        const res  = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=6&api_key=${USDA_KEY}`);
+        const data = await res.json();
+
+        if (!data.foods || !data.foods.length) { dropdown.innerHTML = ''; return; }
+
+        dropdown.innerHTML = data.foods.map(food => `
+            <div class="usda-option" onclick="selectFood(this)"
+                data-name="${food.description}"
+                data-calories="${getNutrient(food, 1008)}"
+                data-protein="${getNutrient(food, 1003)}"
+                data-fat="${getNutrient(food, 1004)}"
+                data-carbs="${getNutrient(food, 1005)}">
+                <strong>${food.description}</strong>
+                <span>${food.brandOwner || food.foodCategory || ''}</span>
+            </div>
+        `).join('');
+    }
+
+    function getNutrient(food, id) {
+        const n = (food.foodNutrients || []).find(n => n.nutrientId === id);
+        return n ? n.value : 0;
+    }
+
+    function selectFood(el) {
+        const row      = el.closest('.ingredient-row');
+        const nameInput = row.querySelector('input[type="text"]');
+        nameInput.value = el.dataset.name;
+        el.closest('.usda-dropdown').innerHTML = '';
+
+        // Auto-fill nutrition fields
+        document.getElementById('calories').value = parseFloat(el.dataset.calories) || '';
+        document.getElementById('protein').value  = parseFloat(el.dataset.protein) || '';
+        document.getElementById('fat').value      = parseFloat(el.dataset.fat) || '';
+        document.getElementById('carbs').value    = parseFloat(el.dataset.carbs) || '';
     }
 
     function handleTagInput(e) {
