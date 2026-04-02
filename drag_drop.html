@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Manager — Meal Planner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            min-height: 100vh;
+        }
+
+        nav {
+            background: #2c3e50;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav h1 { color: white; font-size: 1.2rem; }
+        nav a { color: #ccc; text-decoration: none; margin-left: 1rem; font-size: 0.9rem; }
+        nav a:hover { color: white; }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Week navigation */
+        .week-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .week-nav button {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .week-nav button:hover { background: #34495e; }
+        .week-nav h2 { color: #2c3e50; font-size: 1.1rem; }
+
+        /* Summary bar */
+        .summary {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .summary-item { text-align: center; }
+        .summary-item .value { font-size: 1.4rem; font-weight: bold; color: #27ae60; }
+        .summary-item .label { font-size: 0.8rem; color: #888; }
+
+        /* Planner grid */
+        .planner-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .day-column {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        .day-header {
+            background: #2c3e50;
+            color: white;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .day-header .day-name { font-weight: bold; font-size: 0.9rem; }
+        .day-header .day-date { font-size: 0.75rem; color: #aaa; margin-top: 0.2rem; }
+        .day-header.today { background: #27ae60; }
+
+        .meal-slots { padding: 0.5rem; }
+
+        .meal-slot {
+            margin-bottom: 0.5rem;
+        }
+
+        .slot-label {
+            font-size: 0.7rem;
+            color: #aaa;
+            text-transform: uppercase;
+            padding: 0.2rem 0.3rem;
+            font-weight: bold;
+        }
+
+        .drop-zone {
+            min-height: 60px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 6px;
+            padding: 0.3rem;
+            transition: all 0.2s;
+        }
+
+        .drop-zone.drag-over {
+            border-color: #27ae60;
+            background: #eafaf1;
+        }
+
+        /* Recipe cards in planner */
+        .plan-card {
+            background: #f8f9fa;
+            border-radius: 6px;
+            padding: 0.4rem 0.5rem;
+            margin-bottom: 0.3rem;
+            font-size: 0.8rem;
+            cursor: grab;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid #27ae60;
+        }
+
+        .plan-card:active { cursor: grabbing; }
+        .plan-card.dragging { opacity: 0.4; }
+
+        .plan-card-title {
+            font-weight: bold;
+            color: #2c3e50;
+            flex: 1;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .plan-card-cal { color: #888; font-size: 0.75rem; margin: 0 0.3rem; }
+
+        .plan-card-remove {
+            background: none;
+            border: none;
+            color: #e74c3c;
+            cursor: pointer;
+            font-size: 0.9rem;
+            padding: 0 0.2rem;
+            line-height: 1;
+        }
+
+        /* Recipe sidebar */
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 220px;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        .sidebar {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 1rem;
+            position: sticky;
+            top: 1rem;
+        }
+
+        .sidebar h3 {
+            color: #2c3e50;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;
+        }
+
+        .sidebar input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .sidebar-recipe {
+            padding: 0.5rem;
+            border-radius: 6px;
+            cursor: grab;
+            font-size: 0.85rem;
+            border: 1px solid #eee;
+            margin-bottom: 0.4rem;
+            color: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-recipe:hover { background: #eafaf1; border-color: #27ae60; }
+        .sidebar-recipe:active { cursor: grabbing; }
+        .sidebar-recipe-cal { color: #888; font-size: 0.75rem; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h1>🍴 Recipe Manager</h1>
+    <div>
+        <a href="recipes.html">My Recipes</a>
+        <a href="recipe-form.html">+ New Recipe</a>
+        <a href="drag_drop.html">Meal Planner</a>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- Week navigation -->
+    <div class="week-nav">
+        <button onclick="changeWeek(-1)">← Prev</button>
+        <h2 id="weekLabel"></h2>
+        <button onclick="changeWeek(1)">Next →</button>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary">
+        <div style="font-weight:bold;color:#2c3e50">Weekly Totals:</div>
+        <div class="summary-item">
+            <div class="value" id="totalCal">0</div>
+            <div class="label">Calories</div>
+        </div>
+        <div class="summary-item">
+            <div class="value" id="avgCal">0</div>
+            <div class="label">Avg/Day</div>
+        </div>
+        <div class="summary-item">
+            <div class="value" id="totalMeals">0</div>
+            <div class="label">Meals Planned</div>
+        </div>
+    </div>
+
+    <div class="layout">
+        <!-- Planner grid -->
+        <div>
+            <div class="planner-grid" id="plannerGrid"></div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <h3>🍽️ My Recipes</h3>
+            <input type="text" id="sidebarSearch" placeholder="Search recipes..."
+                   oninput="filterSidebar()">
+            <div id="sidebarRecipes"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API_MEAL   = 'http://localhost/recipe-manager/backend/mealplan.php';
+    const API_RECIPE = 'http://localhost/recipe-manager/backend/recipe.php';
+    const user       = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) window.location.href = 'login.html';
+
+    const DAYS  = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const SLOTS = ['breakfast', 'lunch', 'dinner'];
+
+    let currentWeekOffset = 0;
+    let allRecipes        = [];
+    let mealPlan          = [];
+    let draggedRecipe     = null;
+
+    //week helpers
+    function getWeekDates(offset = 0) {
+        const now    = new Date();
+        const day    = now.getDay();
+        const diff   = (day === 0 ? -6 : 1 - day);
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + diff + offset * 7);
+
+        return DAYS.map((_, i) => {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            return d;
+        });
+    }
+
+    function getWeekCode(offset = 0) {
+        const dates  = getWeekDates(offset);
+        const monday = dates[0];
+        const jan1   = new Date(monday.getFullYear(), 0, 1);
+        const week   = Math.ceil(((monday - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+        return `${monday.getFullYear()}-${week}`;
+    }
+
+    function formatDate(d) {
+        return d.toISOString().split('T')[0];
+    }
+
+    function changeWeek(dir) {
+        currentWeekOffset += dir;
+        loadAll();
+    }
+
+    //load
+    async function loadAll() {
+        const [recipesRes, planRes] = await Promise.all([
+            fetch(`${API_RECIPE}?user_id=${user.user_id}`),
+            fetch(`${API_MEAL}?user_id=${user.user_id}&week=${getWeekCode(currentWeekOffset)}`)
+        ]);
+
+        allRecipes = await recipesRes.json();
+        mealPlan   = await planRes.json();
+
+        renderGrid();
+        renderSidebar(allRecipes);
+        updateSummary();
+    }
+
+    //render grid
+    function renderGrid() {
+        const dates = getWeekDates(currentWeekOffset);
+        const today = formatDate(new Date());
+
+        document.getElementById('weekLabel').textContent =
+            `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} — ${dates[6].toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}`;
+
+        const grid = document.getElementById('plannerGrid');
+        grid.innerHTML = dates.map((date, i) => {
+            const dateStr   = formatDate(date);
+            const isToday   = dateStr === today;
+
+            return `
+                <div class="day-column">
+                    <div class="day-header ${isToday ? 'today' : ''}">
+                        <div class="day-name">${DAYS[i]}</div>
+                        <div class="day-date">${date.toLocaleDateString('en-US', {month:'short', day:'numeric'})}</div>
+                    </div>
+                    <div class="meal-slots">
+                        ${SLOTS.map(slot => `
+                            <div class="meal-slot">
+                                <div class="slot-label">${slot}</div>
+                                <div class="drop-zone"
+                                     data-date="${dateStr}"
+                                     data-slot="${slot}"
+                                     ondragover="onDragOver(event)"
+                                     ondragleave="onDragLeave(event)"
+                                     ondrop="onDrop(event)">
+                                    ${getPlanCards(dateStr, slot)}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    function getPlanCards(date, slot) {
+        return mealPlan
+            .filter(m => m.planned_date === date && m.meal_slot === slot)
+            .map(m => `
+                <div class="plan-card"
+                     draggable="true"
+                     data-id="${m.id}"
+                     data-recipe-id="${m.recipe_id}"
+                     ondragstart="onCardDragStart(event, ${m.recipe_id})">
+                    <span class="plan-card-title">${m.title}</span>
+                    ${m.calories ? `<span class="plan-card-cal">${m.calories}cal</span>` : ''}
+                    <button class="plan-card-remove" onclick="removeEntry(${m.id})">✕</button>
+                </div>
+            `).join('');
+    }
+
+    //sidebar
+    function renderSidebar(recipes) {
+        document.getElementById('sidebarRecipes').innerHTML = recipes.map(r => `
+            <div class="sidebar-recipe"
+                 draggable="true"
+                 ondragstart="onDragStart(event, ${r.id})">
+                <span>${r.title}</span>
+            </div>
+        `).join('') || '<p style="color:#aaa;font-size:0.85rem">No recipes yet</p>';
+    }
+
+    function filterSidebar() {
+        const q       = document.getElementById('sidebarSearch').value.toLowerCase();
+        const filtered = allRecipes.filter(r => r.title.toLowerCase().includes(q));
+        renderSidebar(filtered);
+    }
+
+    //drag and drop
+    function onDragStart(event, recipeId) {
+        draggedRecipe = { recipeId, fromPlanId: null };
+        event.dataTransfer.effectAllowed = 'copy';
+    }
+
+    function onCardDragStart(event, recipeId) {
+        const planId  = event.currentTarget.dataset.id;
+        draggedRecipe = { recipeId, fromPlanId: planId };
+        event.currentTarget.classList.add('dragging');
+        event.dataTransfer.effectAllowed = 'move';
+    }
+
+    function onDragOver(event) {
+        event.preventDefault();
+        event.currentTarget.classList.add('drag-over');
+    }
+
+    function onDragLeave(event) {
+        event.currentTarget.classList.remove('drag-over');
+    }
+
+    async function onDrop(event) {
+        event.preventDefault();
+        const zone = event.currentTarget;
+        zone.classList.remove('drag-over');
+
+        if (!draggedRecipe) return;
+
+        const date = zone.dataset.date;
+        const slot = zone.dataset.slot;
+
+        // If moving an existing card, remove it first
+        if (draggedRecipe.fromPlanId) {
+            await fetch(`${API_MEAL}?id=${draggedRecipe.fromPlanId}`, { method: 'DELETE' });
+        }
+
+        // Save new entry
+        await fetch(API_MEAL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                user_id:      user.user_id,
+                recipe_id:    draggedRecipe.recipeId,
+                planned_date: date,
+                meal_slot:    slot
+            })
+        });
+
+        draggedRecipe = null;
+        loadAll();
+    }
+
+    async function removeEntry(id) {
+        await fetch(`${API_MEAL}?id=${id}`, { method: 'DELETE' });
+        loadAll();
+    }
+
+    //summary
+    function updateSummary() {
+        const totalCal  = mealPlan.reduce((sum, m) => sum + (parseInt(m.calories) || 0), 0);
+        const totalMeals = mealPlan.length;
+        const daysWithMeals = new Set(mealPlan.map(m => m.planned_date)).size;
+        const avgCal    = daysWithMeals ? Math.round(totalCal / daysWithMeals) : 0;
+
+        document.getElementById('totalCal').textContent  = totalCal.toLocaleString();
+        document.getElementById('avgCal').textContent    = avgCal.toLocaleString();
+        document.getElementById('totalMeals').textContent = totalMeals;
+    }
+
+    //init
+    loadAll();
+</script>
+</body>
+</html>
