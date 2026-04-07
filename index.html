@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Manager</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            min-height: 100vh;
+        }
+
+        nav {
+            background: #2c3e50;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav h1 { color: white; font-size: 1.2rem; }
+
+        nav a {
+            color: #ccc;
+            text-decoration: none;
+            margin-left: 1rem;
+            font-size: 0.9rem;
+        }
+
+        nav a:hover { color: white; }
+
+        /* Hero */
+        .hero {
+            background: linear-gradient(135deg, #2c3e50, #27ae60);
+            color: white;
+            text-align: center;
+            padding: 5rem 2rem;
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: rgba(255,255,255,0.85);
+            max-width: 500px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover { transform: translateY(-2px); }
+        .btn-green { background: #27ae60; color: white; }
+        .btn-green:hover { background: #219a52; }
+        .btn-white { background: white; color: #2c3e50; }
+        .btn-white:hover { background: #ecf0f1; }
+        .btn-outline { background: transparent; color: white; border: 2px solid white; }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); }
+
+        /* Features */
+        .features {
+            max-width: 1000px;
+            margin: 4rem auto;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+
+        .feature-card:hover { transform: translateY(-3px); }
+
+        .feature-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
+        .feature-card h3 {
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card p {
+            color: #888;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        /* Quick actions (shown when logged in) */
+        .quick-actions {
+            max-width: 1000px;
+            margin: 0 auto 4rem;
+            padding: 0 1rem;
+            display: none;
+        }
+
+        .quick-actions h2 {
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            text-decoration: none;
+            color: #2c3e50;
+            transition: transform 0.2s;
+            border-top: 4px solid #27ae60;
+        }
+
+        .action-card:hover { transform: translateY(-3px); }
+        .action-card .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+        .action-card h3 { font-size: 1rem; margin-bottom: 0.3rem; }
+        .action-card p { font-size: 0.8rem; color: #888; }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: #aaa;
+            font-size: 0.85rem;
+            border-top: 1px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h1>🍴 Recipe Manager</h1>
+    <div id="navLinks">
+        <a href="login.html">Login</a>
+        <a href="login.html">Register</a>
+    </div>
+</nav>
+
+<div class="hero">
+    <h2>Your Personal Recipe Hub 🍽️</h2>
+    <p>Save your favourite recipes, plan your weekly meals, track nutrition, and auto-generate grocery lists — all in one place.</p>
+    <div class="hero-buttons" id="heroButtons">
+        <a href="login.html" class="btn btn-white">Login</a>
+        <a href="login.html" class="btn btn-outline">Create Account</a>
+    </div>
+</div>
+
+<!-- Features section -->
+<div class="features">
+    <div class="feature-card">
+        <div class="feature-icon">📖</div>
+        <h3>Recipe Library</h3>
+        <p>Save, organise, and search your recipes by ingredient, tag, or name.</p>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>Meal Planner</h3>
+        <p>Drag and drop recipes onto a weekly calendar to plan your meals.</p>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">🛒</div>
+        <h3>Grocery Lists</h3>
+        <p>Auto-generate a shopping list based on your weekly meal plan.</p>
+    </div>
+    <div class="feature-card">
+        <div class="feature-icon">💪</div>
+        <h3>Nutrition Tracking</h3>
+        <p>Track calories, protein, fat and carbs across your meal plan.</p>
+    </div>
+</div>
+
+<!-- Quick actions (shown when logged in) -->
+<div class="quick-actions" id="quickActions">
+    <h2>Welcome back, <span id="welcomeName"></span>! 👋</h2>
+    <div class="actions-grid">
+        <a href="recipes.html" class="action-card">
+            <div class="icon">📖</div>
+            <h3>My Recipes</h3>
+            <p>View and manage your recipe library</p>
+        </a>
+        <a href="recipe-form.html" class="action-card">
+            <div class="icon">➕</div>
+            <h3>Add Recipe</h3>
+            <p>Create a new recipe</p>
+        </a>
+        <a href="drag_drop.html" class="action-card">
+            <div class="icon">📅</div>
+            <h3>Meal Planner</h3>
+            <p>Plan your week</p>
+        </a>
+        <a href="grocery.html" class="action-card">
+            <div class="icon">🛒</div>
+            <h3>Grocery List</h3>
+            <p>Auto-generate your shopping list</p>
+        </a>
+    </div>
+</div>
+
+<footer>
+    Recipe Manager — CS 262 Project
+</footer>
+
+<script>
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+    if (user) {
+        // Show logged in state
+        document.getElementById('navLinks').innerHTML = `
+            <a href="recipes.html">🏠 My Recipes</a>
+            <a href="drag_drop.html">📅 Meal Planner</a>
+            <a href="grocery.html">🛒 Grocery List</a>
+            <a href="#" onclick="logout()">Logout</a>
+        `;
+
+        document.getElementById('heroButtons').innerHTML = `
+            <a href="recipes.html" class="btn btn-white">Go to My Recipes</a>
+            <a href="drag_drop.html" class="btn btn-outline">View Meal Planner</a>
+        `;
+
+        document.getElementById('quickActions').style.display = 'block';
+        document.getElementById('welcomeName').textContent = user.username;
+    }
+
+    async function logout() {
+        await fetch('http://localhost/recipe-manager/backend/auth.php?action=logout', { method: 'POST' });
+        localStorage.removeItem('user');
+        window.location.href = 'index.html';
+    }
+</script>
+</body>
+</html>
