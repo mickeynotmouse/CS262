@@ -191,6 +191,7 @@
             <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
                 <button class="btn print-btn" onclick="window.print()">🖨️ Print</button>
                 <button class="btn btn-gray" onclick="uncheckAll()">Uncheck All</button>
+                <button class="btn btn-green" onclick="sendEmail()">📧 Send to Email</button>
             </div>
         </div>
 
@@ -358,6 +359,53 @@
     }
 
     loadGroceryList();
+
+    async function sendEmail() {
+    const items = Object.values((() => {
+        const map = {};
+        document.querySelectorAll('.grocery-item').forEach(el => {
+            const name     = el.querySelector('label').textContent;
+            const amountEl = el.querySelector('.amount').textContent.trim().split(' ');
+            const recipes  = el.querySelector('.recipes-used').textContent;
+            map[name]      = {
+                name,
+                quantity: amountEl[0],
+                unit:     amountEl.slice(1).join(' '),
+                recipes
+            };
+        });
+        return map;
+    })());
+
+    if (!items.length) {
+        alert('No items on your grocery list!');
+        return;
+    }
+
+    const btn      = event.target;
+    btn.textContent = '📧 Sending...';
+    btn.disabled    = true;
+
+    const res  = await fetch('http://localhost/recipe-manager/backend/mailer.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            user_id: user.user_id,
+            items,
+            week: document.getElementById('weekLabel').textContent
+        })
+    });
+    const data = await res.json();
+
+    btn.textContent = '📧 Send to Email';
+    btn.disabled    = false;
+
+    if (data.success) {
+        alert(data.message);
+    } else {
+        alert('Error: ' + data.error);
+    }
+}
 </script>
 </body>
 </html>
