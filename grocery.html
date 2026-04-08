@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Manager — Grocery List</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            min-height: 100vh;
+        }
+
+        nav {
+            background: #2c3e50;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav h1 { color: white; font-size: 1.2rem; }
+        nav a { color: #ccc; text-decoration: none; margin-left: 1rem; font-size: 0.9rem; }
+        nav a:hover { color: white; }
+
+        .container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .card-header h2 { color: #2c3e50; }
+
+        .week-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .week-nav button {
+            background: #2c3e50;
+            color: white;
+            border: none;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .week-nav button:hover { background: #34495e; }
+        .week-nav span { font-weight: bold; color: #2c3e50; font-size: 0.9rem; }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-green { background: #27ae60; color: white; }
+        .btn-green:hover { background: #219a52; }
+        .btn-gray { background: #95a5a6; color: white; }
+        .btn-gray:hover { background: #7f8c8d; }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 1.5rem 0 0.75rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 2px solid #ecf0f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .grocery-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+
+        .grocery-item:last-child { border-bottom: none; }
+
+        .grocery-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: #27ae60;
+        }
+
+        .grocery-item label {
+            flex: 1;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .grocery-item.checked label {
+            text-decoration: line-through;
+            color: #aaa;
+        }
+
+        .grocery-item .amount {
+            color: #27ae60;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .grocery-item .recipes-used {
+            font-size: 0.75rem;
+            color: #aaa;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #888;
+        }
+
+        .empty-state p { margin-bottom: 1rem; }
+
+        .print-btn {
+            background: #8e44ad;
+            color: white;
+        }
+
+        .print-btn:hover { background: #7d3c98; }
+
+        .summary-bar {
+            display: flex;
+            gap: 1.5rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .summary-bar div { font-size: 0.9rem; color: #555; }
+        .summary-bar strong { color: #27ae60; }
+
+        @media print {
+            nav, .week-nav, .btn, .card-header button { display: none; }
+            .grocery-item input { display: none; }
+            body { background: white; }
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h1>🍴 Recipe Manager</h1>
+    <div>
+        <a href="index.html">🏠 Home</a>
+        <a href="recipes.html">🍽️My Recipes</a>
+        <a href="drag_drop.html">📅 Meal Planner</a>
+        <a href="grocery.html">🛒 Grocery List</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h2>🛒 Grocery List</h2>
+            <div style="display:flex;gap:0.75rem;flex-wrap:wrap">
+                <button class="btn print-btn" onclick="window.print()">🖨️ Print</button>
+                <button class="btn btn-gray" onclick="uncheckAll()">Uncheck All</button>
+            </div>
+        </div>
+
+        <!-- Week navigation -->
+        <div class="week-nav" style="margin-bottom:1rem">
+            <button onclick="changeWeek(-1)">← Prev</button>
+            <span id="weekLabel"></span>
+            <button onclick="changeWeek(1)">Next →</button>
+        </div>
+
+        <div class="summary-bar" id="summaryBar"></div>
+        <div id="groceryContent"></div>
+    </div>
+</div>
+
+<script>
+    const API_MEAL   = 'http://localhost/recipe-manager/backend/mealplan.php';
+    const API_RECIPE = 'http://localhost/recipe-manager/backend/recipe.php';
+    const user       = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) window.location.href = 'login.html';
+
+    let currentWeekOffset = 0;
+    let checkedItems      = new Set();
+
+    function getWeekDates(offset = 0) {
+        const now    = new Date();
+        const day    = now.getDay();
+        const diff   = (day === 0 ? -6 : 1 - day);
+        const monday = new Date(now);
+        monday.setDate(now.getDate() + diff + offset * 7);
+        return Array.from({length: 7}, (_, i) => {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            return d;
+        });
+    }
+
+    function getWeekCode(offset = 0) {
+        const dates  = getWeekDates(offset);
+        const monday = dates[0];
+        const jan1   = new Date(monday.getFullYear(), 0, 1);
+        const week   = Math.ceil(((monday - jan1) / 86400000 + jan1.getDay() + 1) / 7);
+        return `${monday.getFullYear()}-${week}`;
+    }
+
+    function formatDate(d) { return d.toISOString().split('T')[0]; }
+
+    function changeWeek(dir) {
+        currentWeekOffset += dir;
+        checkedItems.clear();
+        loadGroceryList();
+    }
+
+    async function loadGroceryList() {
+        const dates = getWeekDates(currentWeekOffset);
+        document.getElementById('weekLabel').textContent =
+            `${dates[0].toLocaleDateString('en-US', {month:'short', day:'numeric'})} — ${dates[6].toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})}`;
+
+        // Get meal plan for the week
+        const planRes = await fetch(`${API_MEAL}?user_id=${user.user_id}&week=${getWeekCode(currentWeekOffset)}`);
+        const plan    = await planRes.json();
+
+        if (!plan.length) {
+            document.getElementById('summaryBar').innerHTML = '';
+            document.getElementById('groceryContent').innerHTML = `
+                <div class="empty-state">
+                    <p>No meals planned for this week.</p>
+                    <a href="drag_drop.html" class="btn btn-green">Go to Meal Planner</a>
+                </div>`;
+            return;
+        }
+
+        // Get full recipe details for each planned meal
+        const recipeIds = [...new Set(plan.map(m => m.recipe_id))];
+        const recipes   = await Promise.all(
+            recipeIds.map(id => fetch(`${API_RECIPE}?action=single&id=${id}`).then(r => r.json()))
+        );
+
+        // Aggregate ingredients
+        const ingredientMap = {};
+        plan.forEach(meal => {
+            const recipe = recipes.find(r => r.id == meal.recipe_id);
+            if (!recipe || !recipe.ingredients) return;
+
+            recipe.ingredients.forEach(ing => {
+                const key = `${ing.name.toLowerCase()}_${ing.unit}`;
+                if (ingredientMap[key]) {
+                    ingredientMap[key].quantity += parseFloat(ing.quantity) || 0;
+                    if (!ingredientMap[key].recipes.includes(recipe.title)) {
+                        ingredientMap[key].recipes.push(recipe.title);
+                    }
+                } else {
+                    ingredientMap[key] = {
+                        name:     ing.name,
+                        quantity: parseFloat(ing.quantity) || 0,
+                        unit:     ing.unit,
+                        recipes:  [recipe.title]
+                    };
+                }
+            });
+        });
+
+        // Group by first letter
+        const items  = Object.values(ingredientMap).sort((a, b) => a.name.localeCompare(b.name));
+        const groups = {};
+        items.forEach(item => {
+            const letter = item.name[0].toUpperCase();
+            if (!groups[letter]) groups[letter] = [];
+            groups[letter].push(item);
+        });
+
+        // Summary
+        document.getElementById('summaryBar').innerHTML = `
+            <div>🍽️ <strong>${plan.length}</strong> meals planned</div>
+            <div>📋 <strong>${items.length}</strong> ingredients needed</div>
+            <div>✅ <strong>${checkedItems.size}</strong> items checked off</div>
+        `;
+
+        // Render
+        let html = '';
+        Object.entries(groups).forEach(([letter, groupItems]) => {
+            html += `<div class="section-title">${letter}</div>`;
+            groupItems.forEach(item => {
+                const key       = `${item.name.toLowerCase()}_${item.unit}`;
+                const isChecked = checkedItems.has(key);
+                const amount    = item.quantity % 1 === 0 ? item.quantity : item.quantity.toFixed(2);
+                html += `
+                    <div class="grocery-item ${isChecked ? 'checked' : ''}" id="item-${key.replace(/[^a-z0-9]/g, '')}">
+                        <input type="checkbox" id="cb-${key.replace(/[^a-z0-9]/g, '')}"
+                               ${isChecked ? 'checked' : ''}
+                               onchange="toggleItem('${key}', this)">
+                        <label for="cb-${key.replace(/[^a-z0-9]/g, '')}">${item.name}</label>
+                        <span class="amount">${amount} ${item.unit}</span>
+                        <span class="recipes-used">${item.recipes.join(', ')}</span>
+                    </div>`;
+            });
+        });
+
+        document.getElementById('groceryContent').innerHTML = html;
+    }
+
+    function toggleItem(key, checkbox) {
+        const safeKey = key.replace(/[^a-z0-9]/g, '');
+        if (checkbox.checked) {
+            checkedItems.add(key);
+            document.getElementById(`item-${safeKey}`).classList.add('checked');
+        } else {
+            checkedItems.delete(key);
+            document.getElementById(`item-${safeKey}`).classList.remove('checked');
+        }
+        // Update summary
+        document.querySelector('#summaryBar div:last-child').innerHTML =
+            `✅ <strong>${checkedItems.size}</strong> items checked off`;
+    }
+
+    function uncheckAll() {
+        checkedItems.clear();
+        loadGroceryList();
+    }
+
+    async function logout() {
+        await fetch('http://localhost/recipe-manager/backend/auth.php?action=logout', { method: 'POST' });
+        localStorage.removeItem('user');
+        window.location.href = 'index.html';
+    }
+
+    loadGroceryList();
+</script>
+</body>
+</html>
