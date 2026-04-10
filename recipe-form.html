@@ -190,10 +190,14 @@
 <body>
 
 <nav>
-    <h1>🍴 Recipe Manager</h1>
+    <h1><a href="index.html">🏠 Recipe Manager</a></h1>
     <div>
-        <a href="recipes.html">My Recipes</a>
+        <a href="browse.html">🌍 Browse Recipes</a>
+        <a href="recipes.html">🍽️My Recipes</a>
         <a href="recipe-form.html">+ New Recipe</a>
+        <a href="drag_drop.html">📅 Meal Planner</a>
+        <a href="grocery.html">🛒 Grocery List</a>
+        <a href="#" onclick="logout()">Logout</a>
     </div>
 </nav>
 
@@ -460,8 +464,10 @@
             formData.append('image', imageFile);
             const imgRes  = await fetch(`${API}?action=upload_image`, { method: 'POST', body: formData });
             const imgData = await imgRes.json();
+            console.log('Image upload response:', imgData);
             if (imgData.success) payload.image_path = imgData.image_path;
         }
+        console.log('Payload being sent:', payload);
 
         // Save or update
         const method = editId ? 'PUT' : 'POST';
@@ -480,6 +486,12 @@
         } else {
             showMessage(data.error || 'Something went wrong.', 'error');
         }
+    }
+
+    async function logout() {
+        await fetch('http://localhost/recipe-manager/backend/auth.php?action=logout', { method: 'POST' });
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
     }
 </script>
 </body>

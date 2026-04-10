@@ -37,9 +37,8 @@ function getMealPlan() {
     $sunday->modify('+6 days');
 
     $stmt = $db->prepare('
-        SELECT mp.id, mp.planned_date, mp.meal_slot,
-               r.id AS recipe_id, r.title, r.image_path,
-               n.calories
+        SELECT mp.id, mp.planned_date, mp.meal_slot, r.id AS recipe_id, r.title, r.image_path, r.servings,
+        ROUND(n.calories / r.servings) AS calories
         FROM meal_plan mp
         JOIN recipes r ON mp.recipe_id = r.id
         LEFT JOIN nutrition_info n ON r.id = n.recipe_id

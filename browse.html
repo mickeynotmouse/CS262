@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Manager — Browse Recipes</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f4f4;
+            min-height: 100vh;
+        }
+
+        nav {
+            background: #2c3e50;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        nav h1 { color: white; font-size: 1.2rem; }
+        nav a { color: #ccc; text-decoration: none; margin-left: 1rem; font-size: 0.9rem; }
+        nav a:hover { color: white; }
+
+        .container {
+            max-width: 1100px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .toolbar input {
+            padding: 0.7rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            width: 300px;
+        }
+
+        .toolbar input:focus { outline: none; border-color: #27ae60; }
+
+        .btn {
+            padding: 0.7rem 1.4rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-green { background: #27ae60; color: white; }
+        .btn-green:hover { background: #219a52; }
+        .btn-gray { background: #95a5a6; color: white; }
+        .btn-gray:hover { background: #7f8c8d; }
+
+        .category-filters {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .cat-btn {
+            padding: 0.3rem 0.9rem;
+            background: #ecf0f1;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .cat-btn.active {
+            background: #27ae60;
+            color: white;
+        }
+
+        .cat-btn:hover { border-color: #27ae60; }
+
+        .recipes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .recipe-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .recipe-card:hover { transform: translateY(-3px); }
+
+        .recipe-card img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .card-body { padding: 1rem; }
+
+        .card-body h3 {
+            color: #2c3e50;
+            margin-bottom: 0.4rem;
+            font-size: 1rem;
+        }
+
+        .card-meta {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 0.75rem;
+        }
+
+        .card-actions { display: flex; gap: 0.5rem; }
+        .card-actions button { flex: 1; padding: 0.4rem; font-size: 0.85rem; }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem;
+            color: #888;
+            grid-column: 1/-1;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 4rem;
+            color: #888;
+            grid-column: 1/-1;
+            font-size: 1.1rem;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            background: white;
+            border-radius: 10px;
+            max-width: 650px;
+            width: 100%;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .modal img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+        }
+
+        .modal-body { padding: 1.5rem; }
+        .modal-body h2 { color: #2c3e50; margin-bottom: 0.5rem; }
+
+        .modal-meta {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 1rem;
+        }
+
+        .modal-section {
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 1rem 0 0.5rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .modal-ingredients {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-ingredient {
+            font-size: 0.9rem;
+            padding: 0.3rem 0;
+            color: #444;
+        }
+
+        .modal-ingredient span { color: #27ae60; font-weight: bold; }
+
+        .modal-instructions {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: #444;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .import-success {
+            background: #d4edda;
+            color: #155724;
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 1rem;
+            display: none;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h1>🍴 Recipe Manager</h1>
+    <div>
+        <a href="browse.html">🌍 Browse Recipes</a>
+        <a href="recipes.html">🍽️My Recipes</a>
+        <a href="recipe-form.html">+ New Recipe</a>
+        <a href="drag_drop.html">📅 Meal Planner</a>
+        <a href="grocery.html">🛒 Grocery List</a>
+        <a href="#" onclick="logout()">Logout</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="toolbar">
+        <input type="text" id="searchInput" placeholder="Search recipes e.g. chicken, pasta..."
+               onkeydown="if(event.key==='Enter') searchRecipes()">
+        <button class="btn btn-green" onclick="searchRecipes()">Search</button>
+    </div>
+
+    <div class="category-filters" id="categoryFilters"></div>
+    <div class="recipes-grid" id="recipesGrid">
+        <div class="loading">Search for a recipe or pick a category above 👆</div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" id="modal">
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
+<script>
+    const MEALDB  = 'https://www.themealdb.com/api/json/v1/1';
+    const API     = 'http://localhost/recipe-manager/backend/recipe.php';
+    const USDA_KEY = '5TO5Fb4wesu6KMYDNXdQf6kGOIsfeoPHuSgJ3SLV';
+    const user    = JSON.parse(localStorage.getItem('user') || 'null');
+    if (!user) window.location.href = 'login.html';
+
+    let selectedMeal = null;
+
+    //LOAD CATEGORIES
+    async function loadCategories() {
+        const res  = await fetch(`${MEALDB}/categories.php`);
+        const data = await res.json();
+
+        const filters = document.getElementById('categoryFilters');
+        filters.innerHTML = data.categories.map(c => `
+            <button class="cat-btn" onclick="filterByCategory('${c.strCategory}', this)">
+                ${c.strCategory}
+            </button>
+        `).join('');
+    }
+
+    //SEARCH
+    async function searchRecipes() {
+        const q = document.getElementById('searchInput').value.trim();
+        if (!q) return;
+
+        document.getElementById('recipesGrid').innerHTML = '<div class="loading">Searching...</div>';
+
+        const res  = await fetch(`${MEALDB}/search.php?s=${encodeURIComponent(q)}`);
+        const data = await res.json();
+
+        renderGrid(data.meals);
+    }
+
+    //FILTER BY CATEGORY
+    async function filterByCategory(category, btn) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('searchInput').value = '';
+        document.getElementById('recipesGrid').innerHTML = '<div class="loading">Loading...</div>';
+
+        const res  = await fetch(`${MEALDB}/filter.php?c=${encodeURIComponent(category)}`);
+        const data = await res.json();
+
+        renderGrid(data.meals);
+    }
+
+    //RANDOM
+    async function loadRandom() {
+        const res  = await fetch(`${MEALDB}/random.php`);
+        const data = await res.json();
+        if (data.meals) openModal(data.meals[0]);
+    }
+
+    //RENDER GRID
+    function renderGrid(meals) {
+        const grid = document.getElementById('recipesGrid');
+
+        if (!meals || !meals.length) {
+            grid.innerHTML = '<div class="empty-state">No recipes found. Try a different search!</div>';
+            return;
+        }
+
+        grid.innerHTML = meals.map(m => `
+            <div class="recipe-card">
+                <img src="${m.strMealThumb}" alt="${m.strMeal}">
+                <div class="card-body">
+                    <h3>${m.strMeal}</h3>
+                    <div class="card-meta">${m.strCategory || ''} ${m.strArea ? '· ' + m.strArea : ''}</div>
+                    <div class="card-actions">
+                        <button class="btn btn-gray" onclick="openModalById('${m.idMeal}')">View</button>
+                        <button class="btn btn-green" onclick="quickImport('${m.idMeal}', '${m.strMeal.replace(/'/g, "\\'")}')">+ Save to My Recipes</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    //MODAL
+    async function openModalById(id) {
+        const res  = await fetch(`${MEALDB}/lookup.php?i=${id}`);
+        const data = await res.json();
+        if (data.meals) openModal(data.meals[0]);
+    }
+
+    function openModal(meal) {
+        selectedMeal = meal;
+        const ingredients = getMealIngredients(meal);
+
+        document.getElementById('modalBody').innerHTML = `
+            <img src="${meal.strMealThumb}" alt="${meal.strMeal}">
+            <div style="padding:1.5rem">
+                <h2>${meal.strMeal}</h2>
+                <div class="modal-meta">
+                    ${meal.strCategory || ''} ${meal.strArea ? '· ' + meal.strArea : ''}
+                </div>
+
+                <div class="modal-section">Ingredients</div>
+                <div class="modal-ingredients">
+                    ${ingredients.map(i => `
+                        <div class="modal-ingredient">
+                            <span>${i.measure}</span> ${i.name}
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="modal-section">Instructions</div>
+                <div class="modal-instructions">${meal.strInstructions}</div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-green" onclick="importRecipe()">+ Save to My Recipes</button>
+                    <button class="btn btn-gray" onclick="document.getElementById('modalOverlay').classList.remove('open')">Close</button>
+                </div>
+                <div class="import-success" id="importSuccess">
+                    ✅ Recipe imported! <a href="recipes.html" style="color:#155724;font-weight:bold">View My Recipes</a>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('modalOverlay').classList.add('open');
+    }
+
+    function closeModal(event) {
+        if (event.target === document.getElementById('modalOverlay')) {
+            document.getElementById('modalOverlay').classList.remove('open');
+        }
+    }
+
+    //EXTRACT INGREDIENTS
+    function getMealIngredients(meal) {
+        const ingredients = [];
+        for (let i = 1; i <= 20; i++) {
+            const name    = meal[`strIngredient${i}`];
+            const measure = meal[`strMeasure${i}`];
+            if (name && name.trim()) {
+                ingredients.push({ name: name.trim(), measure: (measure || '').trim() });
+            }
+        }
+        return ingredients;
+    }
+
+    //IMPORT RECIPE
+    async function importRecipe() {
+        if (!selectedMeal) return;
+        await doImport(selectedMeal);
+        document.getElementById('importSuccess').style.display = 'block';
+    }
+
+    async function quickImport(id, title) {
+        const res  = await fetch(`${MEALDB}/lookup.php?i=${id}`);
+        const data = await res.json();
+        if (data.meals) {
+            await doImport(data.meals[0]);
+            alert(`✅ "${title}" imported to your recipes!`);
+        }
+    }
+
+    async function doImport(meal) {
+    const ingredients = getMealIngredients(meal).map(i => {
+        const parts    = i.measure.trim().split(' ');
+        const quantity = parseFloat(parts[0]) || 1;
+        const unit     = parts.slice(1).join(' ') || i.measure.trim();
+        return { name: i.name, quantity, unit };
+    });
+
+    // Fetch nutrition for each ingredient from USDA
+    let totalCalories = 0;
+    let totalProtein  = 0;
+    let totalFat      = 0;
+    let totalCarbs    = 0;
+
+    await Promise.all(ingredients.map(async ing => {
+        try {
+            const res  = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(ing.name)}&pageSize=1&api_key=${USDA_KEY}`);
+            const data = await res.json();
+
+            if (data.foods && data.foods.length > 0) {
+                const food     = data.foods[0];
+                const nutrients = food.foodNutrients || [];
+
+                const cal     = nutrients.find(n => n.nutrientId === 1008)?.value || 0;
+                const protein = nutrients.find(n => n.nutrientId === 1003)?.value || 0;
+                const fat     = nutrients.find(n => n.nutrientId === 1004)?.value || 0;
+                const carbs   = nutrients.find(n => n.nutrientId === 1005)?.value || 0;
+
+                // USDA values are per 100g — scale by quantity
+                const scale    = ing.quantity / 100;
+                totalCalories += cal * scale;
+                totalProtein  += protein * scale;
+                totalFat      += fat * scale;
+                totalCarbs    += carbs * scale;
+            }
+        } catch (e) {
+            console.log('Could not fetch nutrition for:', ing.name);
+        }
+    }));
+
+    const nutrition = (totalCalories > 0) ? {
+        calories: Math.round(totalCalories),
+        protein:  Math.round(totalProtein * 10) / 10,
+        fat:      Math.round(totalFat * 10) / 10,
+        carbs:    Math.round(totalCarbs * 10) / 10
+    } : null;
+
+    const payload = {
+        user_id:      user.user_id,
+        title:        meal.strMeal,
+        instructions: meal.strInstructions,
+        servings:     4,
+        image_path:   null,
+        ingredients,
+        tags:         [meal.strCategory, meal.strArea].filter(Boolean).map(t => t.toLowerCase()),
+        nutrition
+    };
+
+    // Save image
+    const imgRes  = await fetch(`http://localhost/recipe-manager/backend/image_proxy.php?url=${encodeURIComponent(meal.strMealThumb)}`);
+    const imgData = await imgRes.json();
+    if (imgData.success) payload.image_path = imgData.image_path;
+
+    const saveRes  = await fetch(API, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(payload)
+    });
+    const saveData = await saveRes.json();
+    return saveData.recipe_id;
+}
+
+    async function logout() {
+        await fetch('http://localhost/recipe-manager/backend/auth.php?action=logout', { method: 'POST' });
+        localStorage.removeItem('user');
+        window.location.href = 'index.html';
+    }
+
+    loadCategories();
+</script>
+</body>
+</html>

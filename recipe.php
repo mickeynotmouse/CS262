@@ -24,38 +24,37 @@ if ($method === 'GET') {
     echo json_encode(['error' => 'Invalid request method']);
 }
 
-
 //Get all recipes
 function getAllRecipes() {
     $db = getDB();
-
-    $user_id = $_GET['user_id'] ?? null;
-    $tag = $_GET['tag'] ?? null;
+    $user_id    = $_GET['user_id'] ?? null;
+    $tag        = $_GET['tag'] ?? null;
     $ingredient = $_GET['ingredient'] ?? null;
 
-    $sql = 'SELECT DISTINCT r.id, r.title, r.servings, r.image_path, r.created_at, GROUP_CONCAT(DISTINCT t.name) AS tags FROM recipes r LEFT JOIN recipe_tags rt ON r.id = rt.recipe_id LEFT JOIN tags t ON rt.tag_id = t.id LEFT JOIN ingredients i ON r.id = i.recipe_id WHERE 1=1';
+    $params = [];
+    $types  = '';
 
-$params = [];
-$types = '';
+    if ($ingredient) {
+        $sql = 'SELECT DISTINCT r.id, r.title, r.servings, r.image_path, r.created_at, GROUP_CONCAT(DISTINCT t.name) AS tags FROM recipes r LEFT JOIN recipe_tags rt ON r.id = rt.recipe_id LEFT JOIN tags t ON rt.tag_id = t.id INNER JOIN ingredients i ON r.id = i.recipe_id WHERE 1=1';
+        $sql     .= ' AND i.name LIKE ?';
+        $params[] = "%$ingredient%";
+        $types   .= 's';
+    } else {
+        $sql = 'SELECT DISTINCT r.id, r.title, r.servings, r.image_path, r.created_at, GROUP_CONCAT(DISTINCT t.name) AS tags FROM recipes r LEFT JOIN recipe_tags rt ON r.id = rt.recipe_id LEFT JOIN tags t ON rt.tag_id = t.id LEFT JOIN ingredients i ON r.id = i.recipe_id WHERE 1=1';
+    }
 
-if ($user_id) {
-    $sql .= ' AND r.user_id = ?';
-    $params[] = $user_id;
-    $types .= 'i';
-}
-if ($tag) {
-    $sql .= ' AND t.name = ?';
-    $params[] = $tag;
-    $types .= 's';
+    if ($user_id) {
+        $sql     .= ' AND r.user_id = ?';
+        $params[] = $user_id;
+        $types   .= 'i';
+    }
+    if ($tag) {
+        $sql     .= ' AND t.name = ?';
+        $params[] = $tag;
+        $types   .= 's';
+    }
 
-}
-if ($ingredient) {
-    $sql .= ' AND i.name = ?';
-    $params[] = "%$ingredient%";
-    $types .= 's';
-}
-
-$sql .= ' GROUP BY r.id ORDER BY r.created_at DESC';
+    $sql .= ' GROUP BY r.id ORDER BY r.created_at DESC';
 
 $stmt = $db->prepare($sql);
 if ($params) $stmt->bind_param($types, ...$params);
