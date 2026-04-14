@@ -250,6 +250,7 @@
         <button onclick="changeWeek(-1)">← Prev</button>
         <h2 id="weekLabel"></h2>
         <button onclick="changeWeek(1)">Next →</button>
+        <button onclick="copyLastWeek()" style="background:#2980b9">📋 Copy Last Week</button>
         <button onclick="clearWeek()" style="background:#d95445">🗑️ Clear This Week</button>
     </div>
 
@@ -522,6 +523,43 @@
         document.getElementById('totalMeals').textContent = totalMeals;
     }
 
+    async function copyLastWeek() {
+    if (!confirm('Copy last week\'s meals to this week?')) return;
+
+    // Fetch last week's meal plan
+    const lastWeekRes  = await fetch(`${API_MEAL}?user_id=${user.user_id}&week=${getWeekCode(currentWeekOffset - 1)}`);
+    const lastWeekPlan = await lastWeekRes.json();
+
+    if (!lastWeekPlan.length) {
+        alert('No meals found in the previous week to copy!');
+        return;
+    }
+
+    // Get this week's dates and last week's dates
+    const thisWeekDates = getWeekDates(currentWeekOffset).map(d => formatDate(d));
+    const lastWeekDates = getWeekDates(currentWeekOffset - 1).map(d => formatDate(d));
+
+    // Copy each entry, shifting the date forward by 7 days
+    await Promise.all(lastWeekPlan.map(m => {
+        const dayIndex    = lastWeekDates.indexOf(m.planned_date);
+        const newDate     = dayIndex >= 0 ? thisWeekDates[dayIndex] : null;
+        if (!newDate) return;
+
+        return fetch(API_MEAL, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({
+                user_id:      user.user_id,
+                recipe_id:    m.recipe_id,
+                planned_date: newDate,
+                meal_slot:    m.meal_slot
+            })
+        });
+    }));
+
+    loadAll();
+}
+
     //init
     loadAll();
 
@@ -530,6 +568,7 @@
     localStorage.removeItem('user');
     window.location.href = 'login.html';
     }
+
 </script>
 </body>
 </html>
